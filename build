@@ -1,0 +1,14 @@
+#!/bin/zsh
+
+if [ "release" = "$1" ]; then
+	clang -Ofast -I /opt/homebrew/Cellar/raylib/5.0/include/ client.c -o run -L /opt/homebrew/Cellar/raylib/5.0/lib/ -lraylib
+
+elif [ "clean" = "$1" ]; then
+	echo unimplemented
+
+elif [ "" = "$1" ]; then 
+	clang -g -O0 -I /opt/homebrew/Cellar/raylib/5.0/include/ client.c -fsanitize=address,undefined -o run -L /opt/homebrew/Cellar/raylib/5.0/lib/ -lraylib -ferror-limit=2
+
+else 
+	echo "build: unknown target: $1"
+fi
