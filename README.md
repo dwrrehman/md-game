@@ -1,18 +1,37 @@
 # md-game
-A minecraft-like game made by Marwa and Daniel.
 
-# how to build:
+A minecraft-like game made by Marwa and Daniel.  
+
+# How to build:
 
 ## Windows:
 
-- Install visual studio
+1. Follow this tutorial for using RayLib in VSCode.
 
-- Install vcpkg (use instructions on the website)
+	https://github.com/raysan5/raylib/wiki/Using-raylib-in-VSCode
+also
+	https://stackoverflow.com/questions/63791456/how-to-add-raylib-to-vs-code
 
-- Run vcpkg install raylib:x64-windows in command line
+2. Done!
 
-- Create a new C/C++ project in visual studio
+## MacOS:
 
-- include "raylib.h" in your source code file
+1. first install raylib using `brew install raylib`
 
+2. then run `./build`
+
+3. then run `./run`
+
+4. Done!
+
+
+## Linux:
+
+1. first install raylib using `sudo apt-get install raylib`
+
+2. then run `./build`
+
+3. then run `./run`
+
+4. Done!
 
