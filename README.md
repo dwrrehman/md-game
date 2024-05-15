@@ -1,9 +1,9 @@
 # md-game
 A minecraft-like game made by Marwa and Daniel.
 
-#how to build:
+# how to build:
 
-##Windows:
+## Windows:
 Install visual studio
 Install vcpkg (use instructions on the website)
 Run vcpkg install raylib:x64-windows in command line
