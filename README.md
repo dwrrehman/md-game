@@ -1,6 +1,6 @@
 # md-game
 
-A minecraft-like game made by Marwa and Daniel.  
+A minecraft-like game made by Marwa and Daniel.  :)
 
 # How to build:
 
