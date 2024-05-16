@@ -55,7 +55,7 @@ void my_UpdateCamera(Camera *camera, int mode) {
 	vertex_count++;
 
 static int seed = 10000;
-static int hash[] = { //the randomness part :-) 
+static int hash[] = { //the randomness part "so called specific hashbrown fucntiion":-) 
 	208,34,231,213,32,248,233,56,161,78,24,140,71,48,140,254,245,255,247,247,40,
 	185,248,251,245,28,124,204,204,76,36,1,107,28,234,163,202,224,245,128,167,204,
 	9,92,217,54,239,174,173,102,193,189,190,121,100,108,167,44,43,77,180,204,8,81,
@@ -68,22 +68,22 @@ static int hash[] = { //the randomness part :-)
 	101,120,99,3,186,86,99,41,237,203,111,79,220,135,158,42,30,154,120,67,87,167,
 	135,176,183,191,253,115,184,21,233,58,129,233,142,39,128,211,118,137,139,255,
 	114,20,218,113,154,27,127,246,250,1,8,198,250,209,92,222,173,21,88,102,219
-};
+}; //2D RANDOM NUM
 
-static int noise2(int x, int y) {
-	int tmp = hash[(y + seed) % 256];
+static int noise2(int x, int y) { //Perlin noise
+	int tmp = hash[(y + seed) % 256]; 
 	return hash[(tmp + x) % 256];
 }
 
-static float lin_inter(float x, float y, float s) {
+static float lin_inter(float x, float y, float s) { //linear interpolation 
 	return x + s * (y - x);
 }
 
-static float smooth_inter(float x, float y, float s) {
+static float smooth_inter(float x, float y, float s) { 
 	return lin_inter(x, y, s * s * ( 3 - 2 * s ));
 }
 
-static float noise2d(float x, float y) {
+static float noise2d(float x, float y) { // perlin noise
 	int x_int = x;
 	int y_int = y;
 	float x_frac = x - x_int;
@@ -97,7 +97,7 @@ static float noise2d(float x, float y) {
 	return smooth_inter(low, high, y_frac);
 }
 
-static float perlin2d(float x, float y, float freq, int depth) {
+static float perlin2d(float x, float y, float freq, int depth) {//perlin noise
 	float xa = x * freq;
 	float ya = y * freq;
 	float amp = 1.0;
@@ -113,7 +113,7 @@ static float perlin2d(float x, float y, float freq, int depth) {
 	return fin / div;
 }
 
-enum blocks {
+enum blocks { // BLOCKS!
 	air_block, grass_block, dirt_block,
 	stone_block, granite_block, wood_block,
 	leaves_block, water_block, moss_block,
@@ -121,7 +121,29 @@ enum blocks {
 	off_path_block, on_path_block, glass_block, block_count,
 };
 
-static Mesh generate_mesh(void) {
+
+
+static void treemaker(int8_t* space, const int s, const int x, const int y,const int z ){ //new
+
+	//min = 3, max = 7
+	int height = (rand()%5 + 3);
+
+
+	space[s * s * x + s*(y+height+1)  + z] = leaves_block;
+
+	int leafheight = (y + height); 
+	for(int i = -1; i < 2; i++){
+		for(int j = -1; j<2; j++){
+			if(((x+i)>=0 && (x+i)<200 ) && ((z+j)>=0 && (z+j)<200) &&space[s * s * (x+i) +s*leafheight+(z+j)] == air_block )
+			space[s * s * (x+i) +s*leafheight+(z+j)] = leaves_block; //leaves placer
+		}
+	}
+
+	for(int i = 0; i<height; i++) space[s * s * x + s*(y+i) + z] = wood_block;
+
+}
+
+static Mesh generate_mesh(void) {  //GENERATING ACTUAL BLOCKS
 	const int s = 200;
 	const int space_count = s * s * s;
 	int8_t* space = (int8_t*) calloc(space_count, 1);
@@ -133,6 +155,7 @@ static Mesh generate_mesh(void) {
 	mesh.texcoords = (float *) MemAlloc(mesh.vertexCount * 2 * sizeof(float)); 
 
 	for (int x = 0; x < s; x++) {
+		
 		for (int z = 0; z < s; z++) {
 			const float f = perlin2d(x, z, 0.01, 20);
 			const int height = f * 50;
@@ -142,9 +165,43 @@ static Mesh generate_mesh(void) {
 				if (y < divide) space[s * s * x + s * y + z] = stone_block + (rand() % 2) * (rand() % 2);
 			}
 			space[s * s * x + s * height + z] = grass_block;
+
+			
+			if(rand()%100 == 3  && space[s * s * x + s * height + (z)] == grass_block){ //new
+			treemaker(space,s,x,height,z);
+			}
+			
 		}
+		
 	}
-	space[s * s * 50 + s * 50 + 4] = air_block;
+	
+	
+	/*manual tree*/ //new
+	space[s * s * 67 + (s*34) + 72] = wood_block;
+	space[s * s * 67 + (s*35) + 72] = wood_block;
+	space[s * s * 67 + (s*36) + 72] = wood_block;
+	space[s * s * 67 + (s*37) + 72] = wood_block;
+	space[s * s * 67 + (s*38) + 72] = wood_block;
+	space[s * s * 67 + (s*39) + 72] = wood_block;
+
+	space[s * s * 67 + (s*40) + 72] = leaves_block;
+	space[s * s * 67 + (s*41) + 72] = leaves_block;
+	space[s * s * 67 + (s*40) + 71] = leaves_block;
+	space[s * s * 68 + (s*40) + 71] = leaves_block;
+	space[s * s * 66 + (s*40) + 71] = leaves_block;
+	space[s * s * 67 + (s*40) + 73] = leaves_block;
+	space[s * s * 68 + (s*40) + 73] = leaves_block; 
+	space[s * s * 66 + (s*40) + 73] = leaves_block;
+	space[s * s * 67 + (s*40) + 72] = leaves_block;
+	space[s * s * 68 + (s*40) + 72] = leaves_block;
+	space[s * s * 66 + (s*40) + 72] = leaves_block;
+
+
+
+
+
+
+	space[s * s * 50 + s * 50 + 4] = air_block; 
 	space[s * s * 50 + s * 50 + 6] = grass_block;
 	space[s * s * 50 + s * 50 + 8] = dirt_block;
 	space[s * s * 50 + s * 50 + 10] = stone_block;
@@ -159,6 +216,7 @@ static Mesh generate_mesh(void) {
 	space[s * s * 50 + s * 50 + 28] = off_path_block;
 	space[s * s * 50 + s * 50 + 30] = on_path_block;
 	space[s * s * 50 + s * 50 + 32] = glass_block;
+	space[s * s * 50 + s * 50 + 34] = wood_block;
 
 	unsigned int vertex_count = 0;
 	unsigned short front_x[256] 	= {1,0,3,4,5,6,7,2,3,4,5,6,7,1};
@@ -249,9 +307,9 @@ static Mesh generate_mesh(void) {
 }
 
 int main(void) {
+	srand(seed);
 	InitWindow(screen_width, screen_height, "block game");
-	SetRandomSeed(42);
-	Texture2D texture = LoadTexture("C:\\Users\\marwe\\Downloads\\Raylib-CPP-Starter-Template-for-VSCODE-main\\Raylib-CPP-Starter-Template-for-VSCODE-main\\.vscode\\blocks.png");
+	Texture2D texture = LoadTexture("C:\\Users\\marwe\\Downloads\\Raylib-CPP-Starter-Template-for-VSCODE-main\\md-game\\Raylib-CPP-Starter-Template-for-VSCODE-main\\.vscode\\blocks.png");
 	Camera camera = {0};
 	camera.position = (Vector3){ 50.0f, 50.0f, 50.0f };
 	camera.target = (Vector3){ 0.0f, 2.0f, 0.0f };
