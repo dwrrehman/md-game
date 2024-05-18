@@ -6,13 +6,18 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
-
+#include <iostream>
 #define CAMERA_ROTATION_SPEED         0.03f
 #define CAMERA_MOUSE_MOVE_SENSITIVITY 0.003f   
 #define camera_accel  0.01f
-Vector3 camera_velocity = (Vector3){ 0.0f, 0.0f, 0.0f };
+Vector3 camera_velocity = (Vector3){ 0.0f, 0.0f, 0.0f};
+
 static const int screen_width = 1280;
 static const int screen_height = 800;
+static const float playerheight = 1.0; //blue to orange, so real height is 2F
+static const int s = 200; //size
+static const int space_count = s * s * s; //3d terrain
+static int8_t* space = nullptr; //initialized in main
 
 void my_UpdateCamera(Camera *camera, int mode) {
 	Vector2 mousePositionDelta = GetMouseDelta();
@@ -24,23 +29,46 @@ void my_UpdateCamera(Camera *camera, int mode) {
 	if (IsKeyDown(KEY_UP)) CameraPitch(camera, CAMERA_ROTATION_SPEED, lockView, rotateAroundTarget, rotateUp);
 	if (IsKeyDown(KEY_RIGHT)) CameraYaw(camera, -CAMERA_ROTATION_SPEED, rotateAroundTarget);
 	if (IsKeyDown(KEY_LEFT)) CameraYaw(camera, CAMERA_ROTATION_SPEED, rotateAroundTarget);
-	CameraYaw(camera, -mousePositionDelta.x*CAMERA_MOUSE_MOVE_SENSITIVITY, rotateAroundTarget);
-	CameraPitch(camera, -mousePositionDelta.y*CAMERA_MOUSE_MOVE_SENSITIVITY, lockView, rotateAroundTarget, rotateUp);
-	if (IsKeyDown(KEY_W)) camera_velocity.z += camera_accel;
-	if (IsKeyDown(KEY_S)) camera_velocity.z -= camera_accel;
-	if (IsKeyDown(KEY_A)) camera_velocity.x -= camera_accel;
-	if (IsKeyDown(KEY_D)) camera_velocity.x += camera_accel;
-	if (IsKeyDown(KEY_SPACE)) camera_velocity.y += camera_accel;
-	if (IsKeyDown(KEY_LEFT_SHIFT)) camera_velocity.y -= camera_accel;
-	CameraMoveForward(camera, camera_velocity.z, moveInWorldPlane);
-	CameraMoveRight(camera, camera_velocity.x, moveInWorldPlane);
-	CameraMoveUp(camera, camera_velocity.y);
-	camera_velocity.x *= 0.95;
-	camera_velocity.y *= 0.95;
-	camera_velocity.z *= 0.95;
-	CameraMoveToTarget(camera, -GetMouseWheelMove());
-	if (IsKeyPressed(KEY_G)) CameraMoveToTarget(camera, 2.0f);
-	if (IsKeyPressed(KEY_Y)) CameraMoveToTarget(camera, -2.0f);
+	CameraYaw(camera, -mousePositionDelta.x*CAMERA_MOUSE_MOVE_SENSITIVITY, rotateAroundTarget);//looking up/down
+	CameraPitch(camera, -mousePositionDelta.y*CAMERA_MOUSE_MOVE_SENSITIVITY, lockView, rotateAroundTarget, rotateUp);//left to right (head movement)
+	
+	bool feetonfloor = space[((int)camera->position.x*s*s) + ((int)(camera->position.y-playerheight)*s) + ((int)camera->position.z)];
+	 if(!feetonfloor){
+		std:: cout << "! !found air block\n";
+			if (IsKeyDown(KEY_W)) camera_velocity.z += camera_accel;
+			if (IsKeyDown(KEY_S)) camera_velocity.z -= camera_accel;
+			if (IsKeyDown(KEY_A)) camera_velocity.x -= camera_accel;
+			if (IsKeyDown(KEY_D)) camera_velocity.x += camera_accel;
+			if (IsKeyDown(KEY_SPACE)) camera_velocity.y += camera_accel;
+			if (IsKeyDown(KEY_LEFT_SHIFT)) camera_velocity.y -= camera_accel;
+			CameraMoveForward(camera, camera_velocity.z, moveInWorldPlane);
+			CameraMoveRight(camera, camera_velocity.x, moveInWorldPlane);
+			CameraMoveUp(camera, camera_velocity.y);
+			camera_velocity.x *= 0.95;
+			camera_velocity.y *= 0.95;
+			camera_velocity.z *= 0.95;
+			CameraMoveToTarget(camera, -GetMouseWheelMove());
+			if (IsKeyPressed(KEY_G)) CameraMoveToTarget(camera, 2.0f);
+			if (IsKeyPressed(KEY_Y)) CameraMoveToTarget(camera, -2.0f);
+
+	 }
+	 else{
+			if (IsKeyDown(KEY_W)) camera_velocity.z += camera_accel;
+			if (IsKeyDown(KEY_S)) camera_velocity.z -= camera_accel;
+			if (IsKeyDown(KEY_A)) camera_velocity.x -= camera_accel;
+			if (IsKeyDown(KEY_D)) camera_velocity.x += camera_accel;
+				CameraMoveForward(camera, camera_velocity.z, moveInWorldPlane);
+			CameraMoveRight(camera, camera_velocity.x, moveInWorldPlane);
+			camera_velocity.x *= 0.95;
+			camera_velocity.z *= 0.95;
+			CameraMoveToTarget(camera, -GetMouseWheelMove());
+			if (IsKeyPressed(KEY_G)) CameraMoveToTarget(camera, 2.0f);
+			if (IsKeyPressed(KEY_Y)) CameraMoveToTarget(camera, -2.0f);
+
+	 
+	 }
+	
+
 }
 
 #define push_vertex(xo, yo, zo, nx, ny, nz, u, v) \
@@ -124,11 +152,8 @@ enum blocks { // BLOCKS!
 
 
 static void treemaker(int8_t* space, const int s, const int x, const int y,const int z ){ //new
-
 	//min = 3, max = 7
 	int height = (rand()%5 + 3);
-
-
 	space[s * s * x + s*(y+height+1)  + z] = leaves_block;
 
 	int leafheight = (y + height); 
@@ -144,9 +169,7 @@ static void treemaker(int8_t* space, const int s, const int x, const int y,const
 }
 
 static Mesh generate_mesh(void) {  //GENERATING ACTUAL BLOCKS
-	const int s = 200;
-	const int space_count = s * s * s;
-	int8_t* space = (int8_t*) calloc(space_count, 1);
+	
 	Mesh mesh = {0};
 	mesh.triangleCount = 12 * space_count;
 	mesh.vertexCount = mesh.triangleCount * 3;
@@ -158,7 +181,7 @@ static Mesh generate_mesh(void) {  //GENERATING ACTUAL BLOCKS
 		
 		for (int z = 0; z < s; z++) {
 			const float f = perlin2d(x, z, 0.01, 20);
-			const int height = f * 50;
+			const int height = f * 0; //change back to 50 later for terrain height
 			const int divide = height / 2;
 			for (int y = 0; y < height; y++) {
 				if (y >= divide) space[s * s * x + s * y + z] = dirt_block;
@@ -166,41 +189,12 @@ static Mesh generate_mesh(void) {  //GENERATING ACTUAL BLOCKS
 			}
 			space[s * s * x + s * height + z] = grass_block;
 
-			
-			if(rand()%100 == 3  && space[s * s * x + s * height + (z)] == grass_block){ //new
+			if(rand()%100 == 3  && space[s * s * x + s * height + (z)] == grass_block){ 
 			treemaker(space,s,x,height,z);
+
 			}
-			
 		}
-		
 	}
-	
-	
-	/*manual tree*/ //new
-	space[s * s * 67 + (s*34) + 72] = wood_block;
-	space[s * s * 67 + (s*35) + 72] = wood_block;
-	space[s * s * 67 + (s*36) + 72] = wood_block;
-	space[s * s * 67 + (s*37) + 72] = wood_block;
-	space[s * s * 67 + (s*38) + 72] = wood_block;
-	space[s * s * 67 + (s*39) + 72] = wood_block;
-
-	space[s * s * 67 + (s*40) + 72] = leaves_block;
-	space[s * s * 67 + (s*41) + 72] = leaves_block;
-	space[s * s * 67 + (s*40) + 71] = leaves_block;
-	space[s * s * 68 + (s*40) + 71] = leaves_block;
-	space[s * s * 66 + (s*40) + 71] = leaves_block;
-	space[s * s * 67 + (s*40) + 73] = leaves_block;
-	space[s * s * 68 + (s*40) + 73] = leaves_block; 
-	space[s * s * 66 + (s*40) + 73] = leaves_block;
-	space[s * s * 67 + (s*40) + 72] = leaves_block;
-	space[s * s * 68 + (s*40) + 72] = leaves_block;
-	space[s * s * 66 + (s*40) + 72] = leaves_block;
-
-
-
-
-
-
 	space[s * s * 50 + s * 50 + 4] = air_block; 
 	space[s * s * 50 + s * 50 + 6] = grass_block;
 	space[s * s * 50 + s * 50 + 8] = dirt_block;
@@ -306,8 +300,10 @@ static Mesh generate_mesh(void) {  //GENERATING ACTUAL BLOCKS
 	return mesh;
 }
 
+
 int main(void) {
 	srand(seed);
+	space = (int8_t*) calloc(space_count, 1);
 	InitWindow(screen_width, screen_height, "block game");
 	Texture2D texture = LoadTexture("C:\\Users\\marwe\\Downloads\\Raylib-CPP-Starter-Template-for-VSCODE-main\\md-game\\Raylib-CPP-Starter-Template-for-VSCODE-main\\.vscode\\blocks.png");
 	Camera camera = {0};
@@ -346,3 +342,5 @@ int main(void) {
 	}
 	CloseWindow();
 }
+
+
