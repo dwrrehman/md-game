@@ -15,9 +15,23 @@ Vector3 camera_velocity = (Vector3){ 0.0f, 0.0f, 0.0f};
 static const int screen_width = 1280;
 static const int screen_height = 800;
 static const float playerheight = 1.0; //blue to orange, so real height is 2F
+static const float playerwidth = .50; //blue to orange, so real height is 2F
 static const int s = 200; //size
 static const int space_count = s * s * s; //3d terrain
 static int8_t* space = nullptr; //initialized in main
+
+
+
+enum blocks { // BLOCKS!
+    air_block, grass_block, dirt_block,
+    stone_block, granite_block, wood_block,
+    leaves_block, water_block, moss_block,
+    iron_ore_block, off_cell_block, on_cell_block,
+    off_path_block, on_path_block, glass_block, block_count,
+};
+
+
+
 
 void my_UpdateCamera(Camera *camera, int mode) {
 	Vector2 mousePositionDelta = GetMouseDelta();
@@ -32,7 +46,33 @@ void my_UpdateCamera(Camera *camera, int mode) {
 	CameraYaw(camera, -mousePositionDelta.x*CAMERA_MOUSE_MOVE_SENSITIVITY, rotateAroundTarget);//looking up/down
 	CameraPitch(camera, -mousePositionDelta.y*CAMERA_MOUSE_MOVE_SENSITIVITY, lockView, rotateAroundTarget, rotateUp);//left to right (head movement)
 	
+     //1 = positive
+   int c000, c001, c011, c010, c100, c101, c111, c110;
+
+
+    c000 = ((int)(camera->position.x-playerwidth)*s*s) + ((int)(camera->position.y-playerheight)*s) + ((int)(camera->position.z-playerwidth)) ;
+    c001 = ((int)(camera->position.x-playerwidth)*s*s) + ((int)(camera->position.y-playerheight)*s) + ((int)(camera->position.z+playerwidth)) ;
+    c010 = ((int)(camera->position.x-playerwidth)*s*s) + ((int)(camera->position.y+playerheight)*s) + ((int)(camera->position.z-playerwidth)) ;
+    c011 = ((int)(camera->position.x-playerwidth)*s*s) + ((int)(camera->position.y+playerheight)*s) + ((int)(camera->position.z+playerwidth)) ;
+    c100 = ((int)(camera->position.x+playerwidth)*s*s) + ((int)(camera->position.y-playerheight)*s) + ((int)(camera->position.z-playerwidth)) ;
+    c101 = ((int)(camera->position.x+playerwidth)*s*s) + ((int)(camera->position.y-playerheight)*s) + ((int)(camera->position.z+playerwidth)) ;
+    c110 = ((int)(camera->position.x+playerwidth)*s*s) + ((int)(camera->position.y+playerheight)*s) + ((int)(camera->position.z-playerwidth)) ;
+    c111 = ((int)(camera->position.x+playerwidth)*s*s) + ((int)(camera->position.y+playerheight)*s) + ((int)(camera->position.z+playerwidth)) ;
+//if c000 etc != 0 or 1 set velocity ot 0.
+
+
 	bool feetonfloor = space[((int)camera->position.x*s*s) + ((int)(camera->position.y-playerheight)*s) + ((int)camera->position.z)];
+           std:: cout << int(space[c000]) << " ";
+            std:: cout << int(space[c001]) << " ";
+            std:: cout << int(space[c010]) <<" ";
+            std:: cout << int(space[c011]) << " ";
+            std:: cout << int(space[c100]) << " ";
+            std:: cout << int(space[c101]) << " ";
+            std:: cout << int(space[c110]) << " ";
+            std:: cout << int(space[c111]) << " \n";
+
+
+
 	 if(!feetonfloor){
 		std:: cout << "! !found air block\n";
 			if (IsKeyDown(KEY_W)) camera_velocity.z += camera_accel;
@@ -53,10 +93,26 @@ void my_UpdateCamera(Camera *camera, int mode) {
 
 	 }
 	 else{
-			if (IsKeyDown(KEY_W)) camera_velocity.z += camera_accel;
-			if (IsKeyDown(KEY_S)) camera_velocity.z -= camera_accel;
-			if (IsKeyDown(KEY_A)) camera_velocity.x -= camera_accel;
-			if (IsKeyDown(KEY_D)) camera_velocity.x += camera_accel;
+		float friction = 0.2;
+           
+          
+     
+            if (int(space[c000]) != 1 || int(space[c001]) != 1 ){  camera_velocity.z = 0;  camera->position.z  -= .07;}
+            else if (IsKeyDown(KEY_W) && int(space[c000]) == 1 && int(space[c001]) == 1 ) {    camera_velocity.z += camera_accel; camera_velocity.z *= (1 - friction * 0.1); }
+           
+            if (int(space[c010]) != 0 || int(space[c011]) != 0 ){  camera_velocity.z = 0;  camera->position.z  -=.07;}
+            else if (IsKeyDown(KEY_S) && int(space[c010]) == 0 && int(space[c011]) == 0){    camera_velocity.z -= camera_accel; camera_velocity.z *= (1 - friction * 0.1); }
+
+
+            if (int(space[c100]) != 1 || int(space[c101]) != 1 ){  camera_velocity.x  = 0;  camera->position.x -= .07;}
+            else if (IsKeyDown(KEY_A) && int(space[c101]) == 1 && int(space[c100]) == 1 ) {    camera_velocity.x -= camera_accel; camera_velocity.x *= (1 - friction * 0.1); }
+
+
+            if (int(space[c111]) != 0 || int(space[c110]) != 0 ){  camera_velocity.x  = 0;  camera->position.x  -= .07;}
+            else if (IsKeyDown(KEY_D) && int(space[c111]) == 0 && int(space[c110]) == 0) {    camera_velocity.x += camera_accel; camera_velocity.x *= (1 - friction * 0.1); }
+
+
+
 				CameraMoveForward(camera, camera_velocity.z, moveInWorldPlane);
 			CameraMoveRight(camera, camera_velocity.x, moveInWorldPlane);
 			camera_velocity.x *= 0.95;
@@ -65,7 +121,7 @@ void my_UpdateCamera(Camera *camera, int mode) {
 			if (IsKeyPressed(KEY_G)) CameraMoveToTarget(camera, 2.0f);
 			if (IsKeyPressed(KEY_Y)) CameraMoveToTarget(camera, -2.0f);
 
-	 
+            
 	 }
 	
 
@@ -141,13 +197,7 @@ static float perlin2d(float x, float y, float freq, int depth) {//perlin noise
 	return fin / div;
 }
 
-enum blocks { // BLOCKS!
-	air_block, grass_block, dirt_block,
-	stone_block, granite_block, wood_block,
-	leaves_block, water_block, moss_block,
-	iron_ore_block, off_cell_block, on_cell_block,
-	off_path_block, on_path_block, glass_block, block_count,
-};
+
 
 
 
@@ -342,5 +392,3 @@ int main(void) {
 	}
 	CloseWindow();
 }
-
-
