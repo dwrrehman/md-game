@@ -27,7 +27,7 @@ enum blocks { // BLOCKS!
     stone_block, granite_block, wood_block,
     leaves_block, water_block, moss_block,
     iron_ore_block, off_cell_block, on_cell_block,
-    off_path_block, on_path_block, glass_block, block_count,
+    off_path_block, on_path_block, glass_block, plank_block, flower, block_count
 };
 
 
@@ -97,19 +97,22 @@ void my_UpdateCamera(Camera *camera, int mode) {
            
           
      
-            if (int(space[c000]) != 1 || int(space[c001]) != 1 ){  camera_velocity.z = 0;  camera->position.z  -= .07;}
-            else if (IsKeyDown(KEY_W) && int(space[c000]) == 1 && int(space[c001]) == 1 ) {    camera_velocity.z += camera_accel; camera_velocity.z *= (1 - friction * 0.1); }
+          
+
+
+     if (int(space[c000]) != 1 || int(space[c001]) != 1 ){  camera_velocity.z = 0;  camera->position.z  -= .07;}
+            else if (IsKeyDown(KEY_W) && space[c000] && space[c001] ) {    camera_velocity.z += camera_accel; camera_velocity.z *= (1 - friction * 0.1); }
            
             if (int(space[c010]) != 0 || int(space[c011]) != 0 ){  camera_velocity.z = 0;  camera->position.z  -=.07;}
-            else if (IsKeyDown(KEY_S) && int(space[c010]) == 0 && int(space[c011]) == 0){    camera_velocity.z -= camera_accel; camera_velocity.z *= (1 - friction * 0.1); }
+            else if (IsKeyDown(KEY_S) && !space[c010] && !space[c011]){    camera_velocity.z -= camera_accel; camera_velocity.z *= (1 - friction * 0.1); }
 
 
             if (int(space[c100]) != 1 || int(space[c101]) != 1 ){  camera_velocity.x  = 0;  camera->position.x -= .07;}
-            else if (IsKeyDown(KEY_A) && int(space[c101]) == 1 && int(space[c100]) == 1 ) {    camera_velocity.x -= camera_accel; camera_velocity.x *= (1 - friction * 0.1); }
+            else if (IsKeyDown(KEY_A) && space[c101]  && space[c100]  ) {    camera_velocity.x -= camera_accel; camera_velocity.x *= (1 - friction * 0.1); }
 
 
             if (int(space[c111]) != 0 || int(space[c110]) != 0 ){  camera_velocity.x  = 0;  camera->position.x  -= .07;}
-            else if (IsKeyDown(KEY_D) && int(space[c111]) == 0 && int(space[c110]) == 0) {    camera_velocity.x += camera_accel; camera_velocity.x *= (1 - friction * 0.1); }
+            else if (IsKeyDown(KEY_D) && !space[c111] && !space[c110])  {    camera_velocity.x += camera_accel; camera_velocity.x *= (1 - friction * 0.1); }
 
 
 
@@ -261,20 +264,23 @@ static Mesh generate_mesh(void) {  //GENERATING ACTUAL BLOCKS
 	space[s * s * 50 + s * 50 + 30] = on_path_block;
 	space[s * s * 50 + s * 50 + 32] = glass_block;
 	space[s * s * 50 + s * 50 + 34] = wood_block;
+    space[s * s * 50 + s * 50 + 36] = plank_block;
+	space[s * s * 50 + s * 50 + 40] = flower;
 
 	unsigned int vertex_count = 0;
-	unsigned short front_x[256] 	= {1,0,3,4,5,6,7,2,3,4,5,6,7,1};
-	unsigned short front_y[256] 	= {0,0,0,0,0,0,0,1,1,1,1,1,1,1};
-	unsigned short back_x[256] 	= {1,0,3,4,5,6,7,2,3,4,5,6,7,1};
-	unsigned short back_y[256] 	= {0,0,0,0,0,0,0,1,1,1,1,1,1,1};
-	unsigned short up_x[256] 	= {2,0,3,4,0,6,7,2,3,4,5,6,7,1};
-	unsigned short up_y[256] 	= {0,0,0,0,1,0,0,1,1,1,1,1,1,1};
-	unsigned short down_x[256] 	= {0,0,3,4,0,6,7,2,3,4,5,6,7,1};
-	unsigned short down_y[256] 	= {0,0,0,0,1,0,0,1,1,1,1,1,1,1};
-	unsigned short left_x[256] 	= {1,0,3,4,5,6,7,2,3,4,5,6,7,1};
-	unsigned short left_y[256] 	= {0,0,0,0,0,0,0,1,1,1,1,1,1,1};
-	unsigned short right_x[256] 	= {1,0,3,4,5,6,7,2,3,4,5,6,7,1};
-	unsigned short right_y[256] 	= {0,0,0,0,0,0,0,1,1,1,1,1,1,1};
+	unsigned short front_x[256] 	= {1,0,3,4,5,6,7,2,3,4,5,6,7,1,0,1};
+	unsigned short front_y[256] 	= {0,0,0,0,0,0,0,1,1,1,1,1,1,1,2,2};
+	unsigned short back_x[256] 		= {1,0,3,4,5,6,7,2,3,4,5,6,7,1,0,1};
+	unsigned short back_y[256] 		= {0,0,0,0,0,0,0,1,1,1,1,1,1,1,2,2};
+	unsigned short up_x[256] 		= {2,0,3,4,0,6,7,2,3,4,5,6,7,1,0,1};
+	unsigned short up_y[256] 		= {0,0,0,0,1,0,0,1,1,1,1,1,1,1,2,2};
+	unsigned short down_x[256] 		= {0,0,3,4,0,6,7,2,3,4,5,6,7,1,0,1};
+	unsigned short down_y[256] 		= {0,0,0,0,1,0,0,1,1,1,1,1,1,1,2,2};
+	unsigned short left_x[256] 		= {1,0,3,4,5,6,7,2,3,4,5,6,7,1,0,1};
+	unsigned short left_y[256] 		= {0,0,0,0,0,0,0,1,1,1,1,1,1,1,2,2};
+	unsigned short right_x[256] 	= {1,0,3,4,5,6,7,2,3,4,5,6,7,1,0,1};
+	unsigned short right_y[256] 	= {0,0,0,0,0,0,0,1,1,1,1,1,1,1,2,2};
+
 
 	for (int x = 0; x < s; x++) {
 		for (int y = 0; y < s; y++) {
@@ -385,8 +391,10 @@ int main(void) {
 		}
 		EndMode3D();
 		DrawText(TextFormat("Position: (%06.3f, %06.3f, %06.3f)", camera.position.x, camera.position.y, camera.position.z), 10, 15, 10, BLACK);
+		DrawText(TextFormat("Velocity: (%06.3f, %06.3f, %06.3f)", camera_velocity.x, camera_velocity.y, camera_velocity.z), 10, 60, 10, BLACK);
 		DrawText(TextFormat("Target: (%06.3f, %06.3f, %06.3f)", camera.target.x, camera.target.y, camera.target.z), 10, 30, 10, BLACK);
 		DrawText(TextFormat("Up: (%06.3f, %06.3f, %06.3f)", camera.up.x, camera.up.y, camera.up.z), 10, 45, 10, BLACK);
+
 		DrawFPS(100, 100);
 		EndDrawing();
 	}
